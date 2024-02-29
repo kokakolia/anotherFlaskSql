@@ -1,12 +1,25 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, abort, request
 from forms.user import RegisterForm, LoginForm
 from data.users import User
 from data import db_session
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from forms.job import JobForm
+from data.jobs import Job
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 db_session.global_init('db/mars_explorer.db')
+
+
+@app.route('/')
+def index():
+    db_sess = db_session.create_session()
+    # job = Job()
+    if current_user.is_authenticated:
+        jobs = db_sess.query(Job).filter((Job.user == current_user) | (Job.is_finished != True))
+    else:
+        jobs = db_sess.query(Job).filter(Job.is_finished != True)
+    return render_template('index.html', jobs=jobs)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -61,6 +74,63 @@ def login():
                                message="Неправильный логин или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
+
+@app.route('/jobs', methods=['GET', 'POST'])
+@login_required
+def add_news():
+    form = JobForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        job = Job()
+        job.job_description = form.title.data
+        job.team_leader = form.leader_id.data
+        job.work_size = form.work_size.data
+        job.collaborators = form.collaborators.data
+        job.is_finished = form.is_finished.data
+        current_user.jobs.append(job)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('job.html', title='Добавление новости',
+                           form=form)
+
+
+# @app.route('/news/<int:id>', methods=['GET', 'POST'])
+# @login_required
+# def edit_news(id):
+#     form = JobForm()
+#     if request.method == "GET":
+#         db_sess = db_session.create_session()
+#         news = db_sess.query(Job).filter(Job.id == id, Job.user == current_user).first()
+#         if news:
+#             form.title.data = news.title
+#             form.content.data = news.content
+#             form.is_private.data = news.is_private
+#         else:
+#             abort(404)
+#     if form.validate_on_submit():
+#         db_sess = db_session.create_session()
+#         news = db_sess.query(Job).filter(Job.id == id, Job.user == current_user).first()
+#         if news:
+#             news.title = form.title.data
+#             news.content = form.content.data
+#             news.is_private = form.is_private.data
+#             db_sess.commit()
+#             return redirect('/')
+#         else:
+#             abort(404)
+#     return render_template('news.html',
+#                            title='Редактирование новости',
+#                            form=form
+#                            )
 
 
 if __name__ == '__main__':

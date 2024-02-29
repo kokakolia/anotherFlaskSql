@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Записи в блоге</h1>
+{% for item in jobs%}
+<div class="col-md6 border rounded">
+<!--    <h2>{{item.title}}</h2>-->
+<!--    <div>-->
+<!--        {{item.content}}-->
+<!--    </div>-->
+<!--    <div>-->
+<!--        Автор - {{item.user.name}}, Дата написания - {{item.created_date}}-->
+<!--    </div>-->
+    <div class="row">
+        <div class="col"><h5>Название работы</h5></div>
+        <div class="col"><h5>Начальник</h5></div>
+        <div class="col"><h5>Длительнось</h5></div>
+        <div class="col"><h5>Номера участников</h5></div>
+        <div class="col"><h5>Статус</h5></div>
+    </div>
+    <div class="row">
+        <div class="col"><h2>{{ item.job_description }}</h2></div>
+        <div class="col"><h2>{{ item.team_leader }}</h2></div>
+        <div class="col"><h2>{{ item.work_size }}</h2></div>
+        <div class="col"><h2>{{ item.collaborators }}</h2></div>
+        <div class="col"><h2>{{ item.is_finished }}</h2></div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
